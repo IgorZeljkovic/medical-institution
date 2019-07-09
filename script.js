@@ -12,7 +12,7 @@ const action = {
 }
 
 class Doktor {
-    constructor(ime, prezime, specijalnost) {
+    constructor (ime, prezime, specijalnost) {
         this.ime = ime;
         this.prezime = prezime;
         this.specijalnost = specijalnost;
@@ -20,7 +20,7 @@ class Doktor {
         logAction(action.CREATE_DOCTOR, this)
     }
 
-    set dodajPacijenta(pacijent) {
+    set dodajPacijenta (pacijent) {
         this.pacijenti.push(pacijent);
     }
 
@@ -43,7 +43,7 @@ class Doktor {
 }
 
 class Pacijent {
-    constructor(ime, prezime, jmbg, brojKartona) {
+    constructor (ime, prezime, jmbg, brojKartona) {
         this.ime = ime;
         this.prezime = prezime;
         this.jmbg = jmbg;
@@ -53,19 +53,19 @@ class Pacijent {
         logAction(action.CREATE_PATIENT, this)
     }
 
-    set izaberiLekara(doktor) {
+    set izaberiLekara (doktor) {
         this.doktor = doktor;
         doktor.dodajPacijenta = this;
         logAction(action.CHOOSE_DOCTOR, this, doktor)
     }
 
-    set dodajPregled(pregled) {
+    set dodajPregled (pregled) {
         this.pregledi.push(pregled);
     }
 }
 
 class LaboratorijskiPregled {
-    constructor(datum, vreme, pacijent, doktor){
+    constructor (datum, vreme, pacijent, doktor) {
         this.datum = datum;
         this.vreme = vreme;
         this.pacijent = pacijent;
@@ -73,7 +73,7 @@ class LaboratorijskiPregled {
         this.obavljen = false;
     }
 
-    obaviPregled() {
+    obaviPregled () {
         this.obavljen = true;
         this.simulateResults();
         logAction(action.LAB_EXAM, this)
@@ -81,20 +81,20 @@ class LaboratorijskiPregled {
 }
 
 class KrvniPritisak extends LaboratorijskiPregled {
-    constructor(datum, vreme, pacijent, doktor) {
+    constructor (datum, vreme, pacijent, doktor) {
         super(datum, vreme, pacijent, doktor);
         this.gornji = 0;
         this.donji = 0;
         this.puls = 0;
     }
 
-    simulateResults() {
+    simulateResults () {
         this.gornji = randomInInterval(80, 160);
         this.donji = randomInInterval(40, 120);
         this.puls = randomInInterval(0, 150);
     }
     
-    get getResults() {
+    get getResults () {
         return {
             gornji: this.gornji,
             donji: this.donji,
@@ -104,33 +104,33 @@ class KrvniPritisak extends LaboratorijskiPregled {
 }
 
 class NivoSeceraUKrvi extends LaboratorijskiPregled {
-    constructor(datum, vreme, pacijent, doktor, vremePoslednjegObroka) {
+    constructor (datum, vreme, pacijent, doktor, vremePoslednjegObroka) {
         super(datum, vreme, pacijent, doktor);
         this.vrednost = 0;
         this.vremePoslednjegObroka = vremePoslednjegObroka;
     }
 
-    simulateResults() {
+    simulateResults () {
         this.vrednost = randomInInterval(1,10);
     }
 
-    get getResults() {
+    get getResults () {
         return this.vrednost;
     }
 }
 
 class NivoHolesterolaUKrvi extends LaboratorijskiPregled {
-    constructor(datum, vreme, pacijent, doktor, vremePoslednjegObroka) {
+    constructor (datum, vreme, pacijent, doktor, vremePoslednjegObroka) {
         super(datum, vreme, pacijent, doktor);
         this.vrednost = 0;
         this.vremePoslednjegObroka = vremePoslednjegObroka;
     }
 
-    simulateResults() {
+    simulateResults () {
         this.vrednost = randomInInterval(1, 10);
     }
 
-    get getResults() {
+    get getResults () {
         return this.vrednost;
     }
 }
@@ -182,7 +182,7 @@ const dateTimeFormat = (dateTime) => {
     const date = dateTime.getDate() + "." + month + "." + dateTime.getFullYear();
     const time = dateTime.getHours() + ":" + dateTime.getMinutes();
 
-    return { date: date, time: time };
+    return { date, time };
 }
 
 const randomInInterval = (min, max) => Math.floor(Math.random()*(max-min+1)+min);
