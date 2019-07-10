@@ -1,10 +1,10 @@
-const tipPregleda = {
+const TIPOVI_PREGLEDA = {
     KRVNI_PRITISAK: "KRVNI_PRITISAK",
     NIVO_SECERA_U_KRVI: "NIVO_SECERA_U_KRVI",
     NIVO_HOLESTEROLA_U_KRVI: "NIVO_HOLESTEROLA_U_KRVI"
 }
 
-const action = {
+const ACTIONS = {
     CREATE_PATIENT: "CREATE_PATIENT",
     CREATE_DOCTOR: "CREATE_DOCTOR",
     CHOOSE_DOCTOR: "CHOOSE_DOCTOR",
@@ -17,27 +17,24 @@ class Doktor {
         this.prezime = prezime;
         this.specijalnost = specijalnost;
         this.pacijenti = [];
-        logAction(action.CREATE_DOCTOR, this)
+        logAction(ACTIONS.CREATE_DOCTOR, this);
     }
 
-    set dodajPacijenta (pacijent) {
+    dodajPacijenta (pacijent) {
         this.pacijenti.push(pacijent);
     }
 
     zakaziLaboratorijskiPregled (datum, vreme, pacijent, tipPregleda, vremePoslednjegObroka = '') {
         switch(tipPregleda) {
             case "KRVNI_PRITISAK":
-                pacijent.dodajPregled =
-                    new KrvniPritisak(datum, vreme, pacijent, this)
-                    break;
+                pacijent.dodajPregled(new KrvniPritisak(datum, vreme, pacijent, this));
+                break;
             case "NIVO_SECERA_U_KRVI":
-                pacijent.dodajPregled = 
-                    new NivoSeceraUKrvi(datum, vreme, pacijent, this, vremePoslednjegObroka)
-                    break;
+                pacijent.dodajPregled(new NivoSeceraUKrvi(datum, vreme, pacijent, this, vremePoslednjegObroka));
+                break;
             case "NIVO_HOLESTEROLA_U_KRVI":
-                pacijent.dodajPregled = 
-                    new NivoHolesterolaUKrvi(datum, vreme, pacijent, this, vremePoslednjegObroka)
-                    break;
+                pacijent.dodajPregled(new NivoHolesterolaUKrvi(datum, vreme, pacijent, this, vremePoslednjegObroka));
+                break;
         }
     }
 }
@@ -50,17 +47,23 @@ class Pacijent {
         this.brojKartona = brojKartona;
         this.doktor = null;
         this.pregledi = [];
-        logAction(action.CREATE_PATIENT, this)
+        logAction(ACTIONS.CREATE_PATIENT, this);
     }
 
     set izaberiLekara (doktor) {
         this.doktor = doktor;
-        doktor.dodajPacijenta = this;
-        logAction(action.CHOOSE_DOCTOR, this, doktor)
+        doktor.dodajPacijenta(this);
+        logAction(ACTIONS.CHOOSE_DOCTOR, this, doktor);
     }
 
-    set dodajPregled (pregled) {
+    dodajPregled (pregled) {
         this.pregledi.push(pregled);
+    }
+
+    obaviPregled (pregled) {
+        pregled.obaviPregled();
+        pregled.simulateResults();
+        logAction(ACTIONS.LAB_EXAM, pregled);
     }
 }
 
@@ -75,8 +78,6 @@ class LaboratorijskiPregled {
 
     obaviPregled () {
         this.obavljen = true;
-        this.simulateResults();
-        logAction(action.LAB_EXAM, this)
     }
 }
 
@@ -94,12 +95,12 @@ class KrvniPritisak extends LaboratorijskiPregled {
         this.puls = randomInInterval(0, 150);
     }
     
-    get getResults () {
-        return {
-            gornji: this.gornji,
-            donji: this.donji,
-            puls: this.puls
-        }
+    getResults () {
+        return `Gornji: ${this.gornji}, Donji: ${this.donji}, Puls: ${this.puls}`;
+    }
+
+    toString () {
+        return `${this.pacijent.ime} je obavio merenje krvnog pritiska.`;
     }
 }
 
@@ -111,11 +112,15 @@ class NivoSeceraUKrvi extends LaboratorijskiPregled {
     }
 
     simulateResults () {
-        this.vrednost = randomInInterval(1,10);
+        this.vrednost = randomInInterval(1, 10);
     }
 
-    get getResults () {
-        return this.vrednost;
+    getResults () {
+        return `Nivo secera: ${this.vrednost}`;
+    }
+
+    toString () {
+        return `${this.pacijent.ime} je obavio merenje nivoa secera u krvi.`;
     }
 }
 
@@ -130,67 +135,62 @@ class NivoHolesterolaUKrvi extends LaboratorijskiPregled {
         this.vrednost = randomInInterval(1, 10);
     }
 
-    get getResults () {
-        return this.vrednost;
+    getResults () {
+        return `Nivo holesterola: ${this.vrednost}`;
+    }
+
+    toString () {
+        return `${this.pacijent.ime} je obavio merenje nivoa holesterola u krvi.`
     }
 }
 
 const logAction = (action, ...params) => {
-    const dateTime = new Date();
-    const { date, time } = dateTimeFormat(dateTime);
     
     switch(action) {
         case "CREATE_PATIENT": {
             const [pacijent] = params;
-            console.log(`[${date} ${time}] Kreiran pacijent ${pacijent.ime}`);
+            console.log(`[${currentDateTime()}] Kreiran pacijent ${pacijent.ime}`);
             break;
         }
         case "CREATE_DOCTOR": {
             const [doktor] = params;
-            console.log(`[${date} ${time}] Kreiran doktor ${doktor.ime}`);
+            console.log(`[${currentDateTime()}] Kreiran doktor ${doktor.ime}`);
             break;
         }
         case "CHOOSE_DOCTOR": {
             const [pacijent, doktor] = params;
-            console.log(`[${date} ${time}] Pacijent ${pacijent.ime} izabrao doktora ${doktor.ime}`);
+            console.log(`[${currentDateTime()}] Pacijent ${pacijent.ime} izabrao doktora ${doktor.ime}`);
             break;
         }
         case "LAB_EXAM": {
             const [labPregled] = params;
-            if(labPregled instanceof KrvniPritisak){
-                console.log(`[${date} ${time}] Pacijent ${labPregled.pacijent.ime} 
-                                                    je obavio merenje krvnog pritiska.`);
-                
-                console.log(`Gornji ${labPregled.getResults.gornji}`);
-                console.log(`Donji ${labPregled.getResults.donji}`);
-                console.log(`Puls ${labPregled.getResults.puls}`);
-            }else if(labPregled instanceof NivoSeceraUKrvi){
-                console.log(`[${date} ${time}] Pacijent ${labPregled.pacijent.ime} je obavio merenje nivoa secera u krvi"`);
-
-                console.log(`Nivo secera: ${labPregled.getResults}`)
-            }else{
-                console.log(`[${date} ${time}] Pacijent ${labPregled.pacijent.ime} je obavio merenje nivoa holesterola u krvi"`);
-
-                console.log(`Nivo holesterola: ${labPregled.getResults}`)
-            }
+            console.log(`[${currentDateTime()} Pacijent ${labPregled.toString()}]`);
+            console.log(labPregled.getResults());
+            break;
         }
     }
 }
 
 const dateTimeFormat = (dateTime) => {
-    const month = dateTime.getMonth() + 1;
-    const date = dateTime.getDate() + "." + month + "." + dateTime.getFullYear();
-    const time = dateTime.getHours() + ":" + dateTime.getMinutes();
+    const date = `${dateTime.getDate()}.${dateTime.getMonth() + 1}.${dateTime.getFullYear()}`;
+    const time = `${dateTime.getHours()}:${dateTime.getMinutes()}`;
 
     return { date, time };
 }
 
-const randomInInterval = (min, max) => Math.floor(Math.random()*(max-min+1)+min);
+const currentDateTime = () => {
+    const dateTime = new Date();
+    const { date, time } = dateTimeFormat(dateTime);
+
+    return date + ' ' + time;
+}
+
+const randomInInterval = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
 let lekar = new Doktor("Milan", "", "Nutricionista");
 let pacijent = new Pacijent("Dragan", "", "1912993199922", "25555");
 pacijent.izaberiLekara = lekar;
-lekar.zakaziLaboratorijskiPregled("12.12.2019", "10:30", pacijent, tipPregleda.NIVO_SECERA_U_KRVI, "13");
-lekar.zakaziLaboratorijskiPregled("11.11.2020", "08:00", pacijent, tipPregleda.KRVNI_PRITISAK);
-pacijent.pregledi[0].obaviPregled();
-pacijent.pregledi[1].obaviPregled();
+lekar.zakaziLaboratorijskiPregled("12.12.2019", "10:30", pacijent, TIPOVI_PREGLEDA.NIVO_SECERA_U_KRVI, "13");
+lekar.zakaziLaboratorijskiPregled("11.11.2020", "08:00", pacijent, TIPOVI_PREGLEDA.KRVNI_PRITISAK);
+pacijent.obaviPregled(pacijent.pregledi[0]);
+pacijent.obaviPregled(pacijent.pregledi[1]);
